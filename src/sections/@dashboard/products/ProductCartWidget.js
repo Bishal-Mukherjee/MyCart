@@ -50,6 +50,7 @@ const CartItem = ({ product, handleRemoveCartItem, handleProductSelection }) => 
     title,
     image,
     price,
+    quantity,
     rating: { rate, count },
   } = product;
 
@@ -64,18 +65,23 @@ const CartItem = ({ product, handleRemoveCartItem, handleProductSelection }) => 
           </Typography>
         </Link>
 
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="subtitle1">₹ {price}</Typography>
-          <Box display={'flex'}>
-            <Box m={0.5} display={'flex'} alignItems={'center'}>
-              <Icon icon={'ic:round-star'} width={20} />
-              <Typography variant="subtitle1">{rate}</Typography>
+        <Stack direction="column">
+          <Typography variant="subtitle1" sx={{ ml: 'auto', mr: 1 }}>
+            Qty: {quantity}
+          </Typography>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="subtitle1">₹ {price}</Typography>
+            <Box display={'flex'}>
+              <Box m={0.5} display={'flex'} alignItems={'center'}>
+                <Icon icon={'ic:round-star'} width={20} />
+                <Typography variant="subtitle1">{rate}</Typography>
+              </Box>
+              <Box m={0.5} display={'flex'} alignItems={'center'}>
+                <Icon icon={'mdi:users'} width={20} />
+                <Typography variant="subtitle1">{count}</Typography>
+              </Box>
             </Box>
-            <Box m={0.5} display={'flex'} alignItems={'center'}>
-              <Icon icon={'mdi:users'} width={20} />
-              <Typography variant="subtitle1">{count}</Typography>
-            </Box>
-          </Box>
+          </Stack>
         </Stack>
 
         <Grid container spacing={1}>
@@ -135,9 +141,9 @@ function CartDrawer({ setOpen }) {
     }
   };
 
-  const handleRemoveCartItem = async ({ productid }) => {
+  const handleRemoveCartItem = async ({ product }) => {
     try {
-      const remainingItems = await removefromcart({ userEmail: user.email, productid });
+      const remainingItems = await removefromcart({ userEmail: user.email, product });
       setCartItems(remainingItems);
     } catch (err) {
       console.log(err);
@@ -201,7 +207,7 @@ function CartDrawer({ setOpen }) {
                         <CartItem
                           product={cartItem}
                           handleProductSelection={() => handleProductSelection(cartItem)}
-                          handleRemoveCartItem={() => handleRemoveCartItem({ productid: cartItem.productid })}
+                          handleRemoveCartItem={() => handleRemoveCartItem({ product: cartItem })}
                         />
                       </Box>
                     ))}

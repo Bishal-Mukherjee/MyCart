@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Autocomplete, Backdrop, CircularProgress, Container, Grid, Box, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Backdrop,
+  CircularProgress,
+  Container,
+  Grid,
+  Box,
+  TextField,
+  MenuItem,
+} from '@mui/material';
 import ProductCard, { ProductDialog } from './Product/Product';
 import { getcategories, getproducts } from '../../../services/product';
+import { applyfilter } from '../../../helpers/filter';
 import ProductCartWidget from '../../@dashboard/products/ProductCartWidget';
 
 const Catalog = () => {
@@ -13,6 +23,7 @@ const Catalog = () => {
 
   const [categories, setCategories] = useState([]);
   const [selectedCatagory, setSelectedCatagory] = useState('');
+  const [appliedFilter, setAppliedFilter] = useState('');
 
   const handleGetProducts = async () => {
     try {
@@ -31,6 +42,33 @@ const Catalog = () => {
         setCategories(tempCategories);
       }
       setShowLoader(false);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleApplyFilter = (tempFilter) => {
+    try {
+      if (tempFilter) {
+        setShowLoader(true);
+        if (tempFilter === 'price:lowtohigh') {
+          const response = applyfilter(products, { variableName: 'price', ordering: 'ascending' });
+          setProducts(response);
+          setShowLoader(false);
+        }
+
+        if (tempFilter === 'price:hightolow') {
+          const response = applyfilter(products, { variableName: 'price', ordering: '' });
+          setProducts(response);
+          setShowLoader(false);
+        }
+
+        if (tempFilter === 'rate:hightolow') {
+          const response = applyfilter(products, { variableName: 'rating', ordering: '' });
+          setProducts(response);
+          setShowLoader(false);
+        }
+      }
     } catch (err) {
       console.log(err);
     }
@@ -72,6 +110,26 @@ const Catalog = () => {
           ListboxProps={{ style: { maxHeight: 185 } }}
           renderInput={(params) => <TextField {...params} placeholder={'Search MyCart.com'} />}
         />
+
+        {selectedCatagory ? (
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              name={'appliedFilter'}
+              value={appliedFilter}
+              label={'Sort by'}
+              sx={{ width: 200 }}
+              onChange={(e) => {
+                setAppliedFilter(e.target.value);
+                handleApplyFilter(e.target.value);
+              }}
+              select
+            >
+              <MenuItem value={'price:lowtohigh'}>Price: Low to High</MenuItem>
+              <MenuItem value={'price:hightolow'}>Price: High to Low</MenuItem>
+              <MenuItem value={'rate:hightolow'}>Ratings</MenuItem>
+            </TextField>
+          </Box>
+        ) : null}
 
         <Grid container spacing={1} sx={{ mt: 2 }}>
           {products?.map((product, index) => (

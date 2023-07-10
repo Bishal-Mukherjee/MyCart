@@ -16,6 +16,8 @@ export const getcart = async (userEmail) => {
   }
 };
 
+const myArray = new Array([1, 2, 2]);
+
 export const addtocart = async ({ userEmail, product }) => {
   try {
     const { doc, getDoc, setDoc, collection } = storeactions;
@@ -24,14 +26,39 @@ export const addtocart = async ({ userEmail, product }) => {
     const documentData = cartDoc.data();
 
     const existingItems = documentData.items;
-    existingItems.push({ productid: nanoid(), ...product });
+    // check whether the product has already been added to the cart or not using the 'id',
+    // if yes, increase the 'quantity' value by 1, each time, else, add the product to the cart
 
-    const updatedDoc = {
-      ...documentData,
-      items: existingItems,
-    };
+    if (existingItems.filter((item) => item.id === product.id).length > 0) {
+      const reqProduct = existingItems
+        .map((item, index) => ({
+          index,
+          ...item,
+        }))
+        .filter((item) => item.id === product.id)[0];
 
-    await setDoc(cartRef, updatedDoc);
+      const updatedProduct = {
+        ...existingItems[reqProduct.index],
+        quantity: reqProduct.quantity + 1,
+      };
+
+      existingItems[reqProduct.index] = updatedProduct;
+      const updatedDoc = {
+        ...documentData,
+        items: existingItems,
+      };
+
+      await setDoc(cartRef, updatedDoc);
+    } else {
+      existingItems.push({ productid: nanoid(), ...product, quantity: 1 });
+
+      const updatedDoc = {
+        ...documentData,
+        items: existingItems,
+      };
+
+      await setDoc(cartRef, updatedDoc);
+    }
 
     return { message: 'Adedd Successfully' };
   } catch (err) {
@@ -40,7 +67,7 @@ export const addtocart = async ({ userEmail, product }) => {
   }
 };
 
-export const removefromcart = async ({ userEmail, productid }) => {
+export const removefromcart = async ({ userEmail, product }) => {
   try {
     const { doc, getDoc, setDoc, collection } = storeactions;
     const cartRef = doc(collection(firestore, 'cart'), userEmail);
@@ -49,13 +76,36 @@ export const removefromcart = async ({ userEmail, productid }) => {
 
     const existingItems = documentData.items;
 
-    remove(existingItems, (item) => item.productid === productid);
+    if (product.quantity > 1) {
+      const reqProduct = existingItems
+        .map((item, index) => ({
+          index,
+          ...item,
+        }))
+        .filter((item) => item.id === product.id)[0];
 
-    const updatedDoc = {
-      items: existingItems,
-    };
+      const updatedProduct = {
+        ...existingItems[reqProduct.index],
+        quantity: reqProduct.quantity - 1,
+      };
 
-    await setDoc(cartRef, updatedDoc);
+      existingItems[reqProduct.index] = updatedProduct;
+      const updatedDoc = {
+        ...documentData,
+        items: existingItems,
+      };
+
+      await setDoc(cartRef, updatedDoc);
+    } else {
+      remove(existingItems, (item) => item.id === product.id);
+
+      const updatedDoc = {
+        items: existingItems,
+      };
+
+      await setDoc(cartRef, updatedDoc);
+    }
+
     return existingItems;
   } catch (err) {
     console.log(err);
